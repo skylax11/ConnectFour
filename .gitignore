@@ -1,0 +1,83 @@
+```gitignore
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Addressables
+ServerData/
+
+# Asset Import Pipeline
+Assets/AssetStoreTools*
+
+# Visual Studio / Rider
+.vs/
+.idea/
+.gradle/
+ExportedObj/
+.consulo/
+
+# Auto-generated solution and project files
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Visual Studio Code
+.vscode/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Desktop.ini
+
+# Crash reports
+sysinfo.txt
+
+# Unity Collaborate
+.collabignore
+
+# Generated metadata
+*.apk
+*.aab
+*.unitypackage
+
+# JetBrains Rider
+.idea/
+
+# Ignore generated documentation
+Documentation~
+
+# Burst
+[Bb]urst[Aa]ot[Bb]uild[Cc]ache/
+
+# Test Results
+TestResults/
+
+# User-specific settings
+UserSettings/
+```
+
+google-services.json
+
+Assets/Firebase/Plugins/x86_64/*.so
+Assets/Firebase/Plugins/x86_64/*.bundle

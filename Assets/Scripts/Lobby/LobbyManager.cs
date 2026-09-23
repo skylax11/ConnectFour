@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [Serializable]
 public struct LobbyPlayerData : INetworkSerializable, IEquatable<LobbyPlayerData>
@@ -117,7 +118,38 @@ public class LobbyManager : NetworkBehaviour
             }
         }
 
-        Players.Add(new LobbyPlayerData { ClientName = name + Players.Count, ClientId = clientId });
+        Players.Add(new LobbyPlayerData { ClientName = name + Players.Count, ClientId = clientId, SelectedTeam = Players.Count % 2 });
+    }
+    [ServerRpc (RequireOwnership = false)]
+    public void StartGameServerRpc()
+    {
+        if (Players.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var p in Players)
+        {
+            if (!p.IsReady)
+            {
+                return;
+            }
+        }
+
+        foreach (var p in Players)
+        {
+            if (NetworkManager.ConnectedClients.TryGetValue(p.ClientId, out NetworkClient client) && client.PlayerObject != null)
+            {
+                PlayerObject playerObject = client.PlayerObject.GetComponent<PlayerObject>();
+
+                if (playerObject != null)
+                {
+                    playerObject.Team.Value = p.SelectedTeam;
+                }
+            }
+        }
+
+        NetworkManager.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
     }
     [ServerRpc (RequireOwnership = false)]
     public void SetPlayerReadyServerRpc(ServerRpcParams rpcParams = default)
@@ -151,5 +183,18 @@ public class LobbyManager : NetworkBehaviour
         }
 
         return false;
+    }
+
+    public int GetClientTeam(ulong clientId)
+    {
+        foreach (var p in Players)
+        {
+            if (p.ClientId == clientId)
+            {
+                return p.SelectedTeam;
+            }
+        }
+
+        return -1;
     }
 }

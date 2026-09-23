@@ -43,7 +43,12 @@ public class LobbyClientUI : MonoBehaviour
 
     private void OnStartClicked()
     {
+        if (!NetworkManager.Singleton.IsHost)
+        {
+            return;
+        }
 
+        LobbyManager.Instance.StartGameServerRpc();
     }
 
     private void OnReadyClicked()

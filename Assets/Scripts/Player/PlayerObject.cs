@@ -8,10 +8,13 @@ public class PlayerObject : NetworkBehaviour
     public NetworkVariable<FixedString32Bytes> Name = new NetworkVariable<FixedString32Bytes>
         (writePerm:NetworkVariableWritePermission.Server);
 
+    public NetworkVariable<int> Team = new NetworkVariable<int>
+        (writePerm:NetworkVariableWritePermission.Server);
+
 
     private void Start()
     {
-        if (IsClient)
+        if (IsOwner)
         {
             StartCoroutine(StartClient());
         }

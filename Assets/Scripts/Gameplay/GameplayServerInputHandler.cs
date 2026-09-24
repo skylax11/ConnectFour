@@ -50,6 +50,21 @@ public class GameplayServerInputHandler : NetworkBehaviour
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
 
+        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out NetworkClient client))
+        {
+            return;
+        }
+        if (client.PlayerObject == null)
+        {
+            return;
+        }
+        if (!client.PlayerObject.TryGetComponent(out PlayerObject pObject))
+        {
+            return;
+        }
+
+        int team = pObject.Team.Value;
+
         int column = GetColumn(clickPosition, resolution);
 
         if (column < 0)
@@ -57,15 +72,31 @@ public class GameplayServerInputHandler : NetworkBehaviour
             return;
         }
 
-        if (GameRuler.Instance == null || !GameRuler.Instance.PutChipOnColumn(clientId, column))
+        if (GameRuler.Instance == null || !GameRuler.Instance.PutChipOnColumn(team, column))
         {
             return;
         }
 
         GameRuler.Instance.CheckGameStatus();
         SpawnChip(column, GetClientTeam(clientId));
-    }
 
+        string strToBroadcast = 1 - team == 0 ? "Blue's Turn" : "Red's Turn";
+
+        UpdateClientUIClientRpc(strToBroadcast);
+    }
+    [ClientRpc]
+    private void UpdateClientUIClientRpc(string broadcast)
+    {
+        print(NetworkManager.Singleton.LocalClientId);
+
+        if (GameSceneClientUI.Instance == null)
+        {
+            print(NetworkManager.Singleton.LocalClientId + "   " + "null");
+            return;
+        }
+
+        GameSceneClientUI.Instance.UpdateTurnText(broadcast);
+    }
     private void SpawnChip(int column, int team)
     {
         NetworkObject prefab = team == 0 ? _blueChipPrefab : _redChipPrefab;

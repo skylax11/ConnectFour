@@ -63,7 +63,7 @@ public class GameRuler : NetworkBehaviour
         }
     }
 
-    public bool PutChipOnColumn(ulong clientId, int column)
+    public bool PutChipOnColumn(int team, int column)
     {
         if (!IsServer)
         {
@@ -74,8 +74,6 @@ public class GameRuler : NetworkBehaviour
         {
             return false;
         }
-
-        int team = GetClientTeam(clientId);
 
         if (team < 0 || team != _currentTeam)
         {
@@ -98,29 +96,6 @@ public class GameRuler : NetworkBehaviour
 
         return true;
     }
-
-    private int GetClientTeam(ulong clientId)
-    {
-        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out NetworkClient client))
-        {
-            return -1;
-        }
-
-        if (client.PlayerObject == null)
-        {
-            return -1;
-        }
-
-        PlayerObject playerObject = client.PlayerObject.GetComponent<PlayerObject>();
-
-        if (playerObject == null)
-        {
-            return -1;
-        }
-
-        return playerObject.Team.Value;
-    }
-
     internal void CheckGameStatus()
     {
         for (int r = 0; r < _rowCount; r++)

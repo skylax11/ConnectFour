@@ -118,7 +118,7 @@ public class LobbyManager : NetworkBehaviour
             }
         }
 
-        Players.Add(new LobbyPlayerData { ClientName = name + Players.Count, ClientId = clientId, SelectedTeam = Players.Count % 2 });
+        Players.Add(new LobbyPlayerData { ClientName = name + "_" + Players.Count, ClientId = clientId, SelectedTeam = Players.Count % 2 });
     }
     [ServerRpc (RequireOwnership = false)]
     public void StartGameServerRpc()

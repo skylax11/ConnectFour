@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public enum BoardCheckType
 {
@@ -34,6 +36,10 @@ public class GameRuler : NetworkBehaviour
 
     private int _currentTeam = 0;
 
+    private bool _matchOver;
+
+    private float _matchStartTime;
+
     private void Awake()
     {
         if (Instance == null)
@@ -61,11 +67,18 @@ public class GameRuler : NetworkBehaviour
         {
             _columnToRow[column] = 0;
         }
+
+        _matchStartTime = Time.time;
     }
 
     public bool PutChipOnColumn(int team, int column)
     {
         if (!IsServer)
+        {
+            return false;
+        }
+
+        if (_matchOver)
         {
             return false;
         }
@@ -148,7 +161,7 @@ public class GameRuler : NetworkBehaviour
 
         if (conjunct == 4)
         {
-            Debug.Log("Match Finished!" + " Winner: " + chipType.ToString());
+            EndMatch(chipType);
             return;
         }
 
@@ -172,5 +185,86 @@ public class GameRuler : NetworkBehaviour
             DFSInBoard(r + 1, c - 1, conjunct, chipType, BoardCheckType.DiagonalUp);
             DFSInBoard(r - 1, c + 1, conjunct, chipType, BoardCheckType.DiagonalUp);
         }
+    }
+
+    private void EndMatch(BoardChipType winner)
+    {
+        if (_matchOver)
+        {
+            return;
+        }
+
+        _matchOver = true;
+
+        Debug.Log("Match Finished! Winner: " + winner.ToString());
+
+        GameOverClientRpc();
+
+        int winningTeam = winner == BoardChipType.BlueChip ? 0 : 1;
+        int winnerUserId = GetUserIdForTeam(winningTeam);
+        float durationMs = (Time.time - _matchStartTime) * 1000f;
+
+        StartCoroutine(ReportAndReturn(winnerUserId, durationMs));
+    }
+
+    private IEnumerator ReportAndReturn(int winnerUserId, float durationMs)
+    {
+        Debug.Log($"[Report] winnerUserId={winnerUserId} durationMs={durationMs} serviceNull={LeaderboardService.Instance == null}");
+
+        if (winnerUserId >= 0 && LeaderboardService.Instance != null)
+        {
+            yield return LeaderboardService.Instance.ReportMatch(winnerUserId,
+                durationMs,
+                () => Debug.Log("[Report] OK"),
+                err => Debug.LogWarning("[Report] HATA: " + err));
+
+            yield return new WaitForSeconds(2f);
+
+        }
+
+        ReturnToMainMenu();
+    }
+
+    private int GetUserIdForTeam(int team)
+    {
+        foreach (var kvp in NetworkManager.Singleton.ConnectedClients)
+        {
+            NetworkClient client = kvp.Value;
+
+            if (client.PlayerObject == null)
+            {
+                continue;
+            }
+
+            PlayerObject playerObject = client.PlayerObject.GetComponent<PlayerObject>();
+
+            if (playerObject != null && playerObject.Team.Value == team)
+            {
+                return playerObject.UserId.Value;
+            }
+        }
+
+        return -1;
+    }
+
+    [ClientRpc]
+    private void GameOverClientRpc()
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        ReturnToMainMenu();
+    }
+
+    private void ReturnToMainMenu()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        SceneManager.LoadScene("MainMenu");
     }
 }

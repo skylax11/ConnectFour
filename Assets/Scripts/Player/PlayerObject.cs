@@ -11,6 +11,9 @@ public class PlayerObject : NetworkBehaviour
     public NetworkVariable<int> Team = new NetworkVariable<int>
         (writePerm:NetworkVariableWritePermission.Server);
 
+    public NetworkVariable<int> UserId = new NetworkVariable<int>
+        (writePerm:NetworkVariableWritePermission.Server);
+
 
     private void Start()
     {
@@ -26,10 +29,18 @@ public class PlayerObject : NetworkBehaviour
             return LobbyManager.Instance != null && LobbyManager.Instance.IsSpawned;
         });
 
-        string playerName = Bootstrap.Instance != null
-        ? Bootstrap.Instance.PlayerName
+
+        string playerName = AuthSession.Username != string.Empty
+        ? AuthSession.Username
         : $"Player {NetworkManager.Singleton.LocalClientId}";
 
         LobbyManager.Instance.OnPlayerJoinedServerRpc(playerName);
+        SetUserIdServerRpc(AuthSession.UserId);
+    }
+
+    [ServerRpc]
+    private void SetUserIdServerRpc(int userId)
+    {
+        UserId.Value = userId;
     }
 }
